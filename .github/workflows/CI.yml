@@ -1,0 +1,178 @@
+name: UI & API Automation Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+  pull_request:
+    branches:
+      - main
+      - master
+
+  workflow_dispatch:
+
+jobs:
+
+  ####################################################
+  # UI AUTOMATION
+  ####################################################
+
+  playwright-tests:
+
+    name: Playwright UI Tests
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 30
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Node Modules
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Verify Playwright Installation
+        run: npx playwright --version
+
+      - name: Run Playwright Tests
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          EMAIL: ${{ secrets.EMAIL }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+        run: npx playwright test
+
+      - name: Upload HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-html-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: test-results/
+          retention-days: 7
+
+      - name: Upload Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots
+          path: test-results/**/*.png
+          if-no-files-found: ignore
+
+      - name: Upload Videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-videos
+          path: test-results/**/*.webm
+          if-no-files-found: ignore
+
+      - name: Upload Traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/**/*.zip
+          if-no-files-found: ignore
+
+  ####################################################
+  # API AUTOMATION
+  ####################################################
+
+  api-tests:
+
+    name: RestAssured API Tests
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 30
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 22
+          cache: maven
+
+      - name: Verify Java
+        run: java -version
+
+      - name: Verify Maven
+        run: mvn -version
+
+      - name: Build Framework
+        run: mvn clean compile
+
+      - name: Run API Tests
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          EMAIL: ${{ secrets.EMAIL }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+        run: mvn clean test
+
+      - name: Upload Surefire Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+
+      - name: Upload API Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-results
+          path: target/
+
+  ####################################################
+  # PIPELINE SUMMARY
+  ####################################################
+
+  pipeline-summary:
+
+    name: Automation Summary
+
+    needs:
+      - playwright-tests
+      - api-tests
+
+    runs-on: ubuntu-latest
+
+    if: always()
+
+    steps:
+
+      - name: UI Result
+        run: |
+          echo "Playwright Job : ${{ needs.playwright-tests.result }}"
+
+      - name: API Result
+        run: |
+          echo "API Job : ${{ needs.api-tests.result }}"
+
+      - name: Pipeline Status
+        run: echo "Automation Pipeline Completed Successfully"
