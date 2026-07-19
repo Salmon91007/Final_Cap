@@ -44,7 +44,7 @@ jobs:
 
       - name: Run Playwright Tests
         working-directory: Playwright
-         env:
+        env:
             BASE_URL: ${{ secrets.SALMAN_BASE_URL }}
             EMAIL: ${{ secrets.SALMAN_AARON_EMAIL }}
             PASSWORD: ${{ secrets.SALMAN_AARON_PASSWORD }}
@@ -72,7 +72,7 @@ jobs:
         with:
           name: screenshots
           path: |
-            test-results/**/*.png
+            Playwright/test-results/**/*.png
           if-no-files-found: ignore
 
       - name: Upload Videos
@@ -81,7 +81,7 @@ jobs:
         with:
           name: videos
           path: |
-            test-results/**/*.webm
+            Playwright/test-results/**/*.webm
           if-no-files-found: ignore
 
       - name: Upload Traces
@@ -90,5 +90,5 @@ jobs:
         with:
           name: traces
           path: |
-            test-results/**/*.zip
+            Playwright/test-results/**/*.zip
           if-no-files-found: ignore
