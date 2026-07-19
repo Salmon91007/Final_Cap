@@ -1,0 +1,63 @@
+name: API Automation Tests
+
+on:
+  push:
+    branches:
+      - main
+      - Salman_Final_Capstone
+
+  pull_request:
+    branches:
+      - main
+      - Salman_Final_Capstone
+
+  workflow_dispatch:
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 22
+        working-directory: API
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "22"
+          cache: maven
+
+      - name: Verify Java Version
+        working-directory: API
+        run: java -version
+
+      - name: Verify Maven Version
+        working-directory: API
+        run: mvn -version
+
+      - name: Build Project
+        working-directory: API
+        run: mvn clean compile
+
+      - name: Run API Tests
+        env:
+          BASE_URL: ${{ secrets.SALMAN_BASE_URL }}
+          EMAIL: ${{ secrets.SALMAN_AARON_EMAIL }}
+          PASSWORD: ${{ secrets.SALMAN_AARON_PASSWORD }}
+        run: mvn clean test
+
+      - name: Upload Surefire Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: target/

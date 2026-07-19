@@ -1,11 +1,11 @@
 export const card = {
 
-    cardHolderName: "Salman Benny",
+    cardHolderName: process.env.CARD_HOLDER_NAME!,
 
-    cardNumber: "4111111111111111",
+    cardNumber: process.env.CARD_NUMBER!,
 
-    expiry: "12/30",
+    expiry: process.env.CARD_EXPIRY!,
 
-    cvv: "123"
+    cvv: process.env.CARD_CVV!
 
 };

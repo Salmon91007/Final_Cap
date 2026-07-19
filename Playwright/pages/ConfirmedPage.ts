@@ -14,6 +14,11 @@ export class ConfirmedPage {
 
     async verifyBookingConfirmed(){
         logger.info("Verifying booking confirmation page");
+        
+        await this.booking.bookingMessage.waitFor({
+        state: "visible",
+        timeout: 15000
+         });
 
         await expect(this.booking.bookingMessage).toBeVisible();
 
