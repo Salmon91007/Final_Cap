@@ -1,11 +1,21 @@
+function getRequiredEnv(name: string): string {
+    const value = process.env[name];
+
+    if (!value) {
+        throw new Error(`Missing required environment variable: ${name}`);
+    }
+
+    return value;
+}
+
 export const card = {
 
-    cardHolderName: process.env.CARD_HOLDER_NAME!,
+    cardHolderName: getRequiredEnv("CARD_HOLDER_NAME"),
 
-    cardNumber: process.env.CARD_NUMBER!,
+    cardNumber: getRequiredEnv("CARD_NUMBER"),
 
-    expiry: process.env.CARD_EXPIRY!,
+    expiry: getRequiredEnv("CARD_EXPIRY"),
 
-    cvv: process.env.CARD_CVV!
+    cvv: getRequiredEnv("CARD_CVV")
 
 };

@@ -43,12 +43,22 @@ jobs:
         working-directory: Playwright
         run: npx playwright --version
 
+      - name: Ensure Report Directories Exist
+        working-directory: Playwright
+        run: |
+          mkdir -p playwright-report
+          mkdir -p test-results
+
       - name: Run Playwright Tests
         working-directory: Playwright
         env:
           BASE_URL: ${{ secrets.SALMAN_BASE_URL }}
           EMAIL: ${{ secrets.SALMAN_AARON_EMAIL }}
           PASSWORD: ${{ secrets.SALMAN_AARON_PASSWORD }}
+          CARD_HOLDER_NAME: ${{ vars.CARD_HOLDER_NAME || 'Salman Benny' }}
+          CARD_NUMBER: ${{ vars.CARD_NUMBER || '4111111111111111' }}
+          CARD_EXPIRY: ${{ vars.CARD_EXPIRY || '12/30' }}
+          CARD_CVV: ${{ vars.CARD_CVV || '123' }}
         run: npx playwright test
 
       - name: Upload Playwright HTML Report

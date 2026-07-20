@@ -1,9 +1,19 @@
+function getRequiredEnv(name: string): string {
+    const value = process.env[name];
+
+    if (!value) {
+        throw new Error(`Missing required environment variable: ${name}`);
+    }
+
+    return value;
+}
+
 export const config = {
 
-    baseUrl: process.env.BASE_URL!,
+    baseUrl: getRequiredEnv("BASE_URL"),
 
-    email: process.env.EMAIL!,
+    email: getRequiredEnv("EMAIL"),
 
-    password: process.env.PASSWORD!
+    password: getRequiredEnv("PASSWORD")
 
 };
