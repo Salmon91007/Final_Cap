@@ -1,4 +1,4 @@
-name: Playwright UI Automation
+name: UI & Performance Automation
 
 on:
   push:
@@ -12,9 +12,10 @@ on:
   workflow_dispatch:
 
 jobs:
+
   playwright-tests:
 
-    name: Run Playwright Tests
+    name: Playwright UI Tests
 
     runs-on: ubuntu-latest
 
@@ -45,9 +46,9 @@ jobs:
       - name: Run Playwright Tests
         working-directory: Playwright
         env:
-            BASE_URL: ${{ secrets.SALMAN_BASE_URL }}
-            EMAIL: ${{ secrets.SALMAN_AARON_EMAIL }}
-            PASSWORD: ${{ secrets.SALMAN_AARON_PASSWORD }}
+          BASE_URL: ${{ secrets.SALMAN_BASE_URL }}
+          EMAIL: ${{ secrets.SALMAN_AARON_EMAIL }}
+          PASSWORD: ${{ secrets.SALMAN_AARON_PASSWORD }}
         run: npx playwright test
 
       - name: Upload Playwright HTML Report
@@ -58,7 +59,7 @@ jobs:
           path: Playwright/playwright-report/
           retention-days: 7
 
-      - name: Upload Test Results
+      - name: Upload Playwright Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -71,8 +72,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
-          path: |
-            Playwright/test-results/**/*.png
+          path: Playwright/test-results/**/*.png
           if-no-files-found: ignore
 
       - name: Upload Videos
@@ -80,8 +80,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: videos
-          path: |
-            Playwright/test-results/**/*.webm
+          path: Playwright/test-results/**/*.webm
           if-no-files-found: ignore
 
       - name: Upload Traces
@@ -89,6 +88,82 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: traces
-          path: |
-            Playwright/test-results/**/*.zip
+          path: Playwright/test-results/**/*.zip
           if-no-files-found: ignore
+
+
+  performance-tests:
+
+    name: Run K6 Performance Tests
+
+    runs-on: ubuntu-latest
+
+    needs: playwright-tests
+
+    timeout-minutes: 20
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install K6
+        run: |
+          sudo gpg -k
+          sudo apt-get update
+          sudo apt-get install -y gnupg software-properties-common
+
+          curl -fsSL https://dl.k6.io/key.gpg \
+            | sudo gpg --dearmor \
+            -o /usr/share/keyrings/k6-archive-keyring.gpg
+
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+
+          sudo apt-get update
+          sudo apt-get install -y k6
+
+      - name: Verify K6 Installation
+        run: k6 version
+
+      - name: Create Reports Folder
+        working-directory: Performance
+        run: mkdir -p reports
+
+      - name: Run Login Performance Test
+        working-directory: Performance
+        env:
+          BASE_URL: ${{ secrets.SALMAN_BASE_URL }}
+          EMAIL: ${{ secrets.SALMAN_AARON_EMAIL }}
+          PASSWORD: ${{ secrets.SALMAN_AARON_PASSWORD }}
+        run: |
+          k6 run scripts/loginPerformance.js \
+          --summary-export=reports/login-summary.json
+
+      - name: Run Search Performance Test
+        working-directory: Performance
+        env:
+          BASE_URL: ${{ secrets.SALMAN_BASE_URL }}
+          EMAIL: ${{ secrets.SALMAN_AARON_EMAIL }}
+          PASSWORD: ${{ secrets.SALMAN_AARON_PASSWORD }}
+        run: |
+          k6 run scripts/searchPerformance.js \
+          --summary-export=reports/search-summary.json
+
+      - name: Run Booking Performance Test
+        working-directory: Performance
+        env:
+          BASE_URL: ${{ secrets.SALMAN_BASE_URL }}
+          EMAIL: ${{ secrets.SALMAN_AARON_EMAIL }}
+          PASSWORD: ${{ secrets.SALMAN_AARON_PASSWORD }}
+        run: |
+          k6 run scripts/bookingPerformance.js \
+          --summary-export=reports/booking-summary.json
+
+      - name: Upload Performance Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-reports
+          path: Performance/reports/
+          retention-days: 7
